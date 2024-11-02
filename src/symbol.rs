@@ -1,4 +1,11 @@
-use std::{cell::RefCell, collections::HashMap, hash::Hash, ops::Deref, rc::Rc};
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+    fmt::{self, Debug, Display},
+    hash::Hash,
+    ops::Deref,
+    rc::Rc,
+};
 
 #[derive(Clone)]
 pub struct SymbolsProvider<Types> {
@@ -26,6 +33,30 @@ impl<Types> SymbolInfo<Types> {
 
 pub struct Symbol<Types> {
     info: Rc<SymbolInfo<Types>>,
+}
+
+impl<Types> Debug for Symbol<Types>
+where
+    Types: Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "( {:?} | ", self.label)?;
+        match &self.associated_type {
+            Some(associated_type) => write!(f, "{:?}", associated_type),
+            None => write!(f, "None"),
+        }?;
+        write!(f, " )")?;
+        Ok(())
+    }
+}
+
+impl<Types> Display for Symbol<Types>
+where
+    Types: Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.label)
+    }
 }
 
 impl<Types> Symbol<Types> {

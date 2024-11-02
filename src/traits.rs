@@ -1,5 +1,5 @@
 use std::{
-    fmt::Debug,
+    fmt::{Debug, Display},
     ops::{Add, Mul, Neg},
 };
 
@@ -19,7 +19,7 @@ pub struct MulTraits<Types> {
 
 pub trait PolyTypes<Types: PolyTypes<Types>>
 where
-    Self: Sized + Debug + Clone + Eq,
+    Self: Sized + Display + Debug + Clone + Eq,
     Self: Mul<Output = MulTraits<Types>>,
     Self: Add<Output = Option<Self>>, // TODO: this is not checking commutative in any kind
     Self: Neg<Output = Self>,
@@ -28,7 +28,7 @@ where
 
 pub trait PolyValues<Types: PolyTypes<Types>, Values: PolyValues<Types, Values>>
 where
-    Self: Sized + Debug + Clone,
+    Self: Sized + Display + Debug + Clone,
     Self: Mul<Output = Option<Self>>,
     Self: Add<Output = Option<Self>>,
     Self: Neg<Output = Self>,

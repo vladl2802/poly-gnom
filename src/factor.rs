@@ -1,3 +1,8 @@
+use std::{
+    fmt::{self, Debug, Display},
+    marker::PhantomData,
+};
+
 use crate::{
     error::FinalizeError,
     symbol::Symbol,
@@ -28,7 +33,7 @@ pub trait Finalizable<Values, Types> {
 
 #[derive(Clone)]
 pub enum Factor<Values, Types> {
-    Value(Value<Values>),
+    Value(Value<Values, Types>),
     Variable(Variable<Types>),
     SubPoly(SubPoly<Values, Types>),
 }
@@ -83,18 +88,50 @@ where
     }
 }
 
-#[derive(Clone)]
-pub struct Value<Values> {
-    value: Values,
-}
-
-impl<Values> Value<Values> {
-    pub fn new(value: Values) -> Self {
-        Value { value }
+impl<Values, Types> Debug for Factor<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Value(value) => write!(f, "{:?}", value),
+            Self::Variable(variable) => write!(f, "{:?}", variable),
+            Self::SubPoly(sub_poly) => write!(f, "{:?}", sub_poly),
+        }
     }
 }
 
-impl<Values, Types> Factorable<Values, Types> for Value<Values>
+impl<Values, Types> Display for Factor<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Factor::Value(value) => write!(f, "{}", value),
+            Factor::Variable(variable) => write!(f, "{}", variable),
+            Factor::SubPoly(sub_poly) => write!(f, "( {} )", sub_poly),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Value<Values, Types> {
+    value: Values,
+    _marker: PhantomData<Types>, // I guess this is only way to avoid 'unconstrained generic parameter'
+}
+
+impl<Values, Types> Value<Values, Types> {
+    pub fn new(value: Values) -> Self {
+        Value {
+            value,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<Values, Types> Factorable<Values, Types> for Value<Values, Types>
 where
     Types: PolyTypes<Types>,
     Values: PolyValues<Types, Values>,
@@ -104,7 +141,7 @@ where
     }
 }
 
-impl<Values, Types> Substitutiable<Values, Types> for Value<Values>
+impl<Values, Types> Substitutiable<Values, Types> for Value<Values, Types>
 where
     Self: Factorable<Values, Types>,
     Types: PolyTypes<Types>,
@@ -117,7 +154,7 @@ where
     }
 }
 
-impl<Values, Types> Finalizable<Values, Types> for Value<Values>
+impl<Values, Types> Finalizable<Values, Types> for Value<Values, Types>
 where
     Self: Factorable<Values, Types>,
     Types: PolyTypes<Types>,
@@ -129,6 +166,26 @@ where
 
     fn finalize_value(self) -> Result<Values, FinalizeError> {
         Ok(self.value)
+    }
+}
+
+impl<Values, Types> Debug for Value<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "( {:?} | {:?} )", self.value, self.value.as_type())
+    }
+}
+
+impl<Values, Types> Display for Value<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.value)
     }
 }
 
@@ -185,6 +242,24 @@ where
 
     fn finalize_value(self) -> Result<Values, FinalizeError> {
         Err(FinalizeError::NoValueToFinalize)
+    }
+}
+
+impl<Types> Debug for Variable<Types>
+where
+    Types: PolyTypes<Types>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.symbol)
+    }
+}
+
+impl<Types> Display for Variable<Types>
+where
+    Types: PolyTypes<Types>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.symbol)
     }
 }
 
@@ -273,5 +348,48 @@ where
             Ok(None) => Err(FinalizeError::NoTypeToFinalize),
             Err(err) => Err(err),
         }
+    }
+}
+
+impl<Values, Types> Debug for SubPoly<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "( ")?;
+        let len = self.parts.len();
+        self.parts.iter().enumerate().try_for_each(|(i, term)| {
+            write!(f, "{:?}", term)?;
+            if i + 1 != len {
+                write!(f, " + ")?;
+            }
+            Ok(())
+        })?;
+        write!(f, " | ")?;
+        match self.finalize_type() {
+            Ok(finalized_type) => write!(f, "{:?}", finalized_type)?,
+            Err(_) => write!(f, "None")?,
+        }
+        write!(f, " )")?;
+        Ok(())
+    }
+}
+
+impl<Values, Types> Display for SubPoly<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let len = self.parts.len();
+        self.parts.iter().enumerate().try_for_each(|(i, term)| {
+            write!(f, "{}", term)?;
+            if i + 1 != len {
+                write!(f, " + ")?;
+            }
+            Ok(())
+        })?;
+        Ok(())
     }
 }

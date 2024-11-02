@@ -1,4 +1,7 @@
-use std::ops::{Add, Mul, Neg};
+use std::{
+    fmt::{self, Debug, Display},
+    ops::{Add, Mul, Neg},
+};
 
 use poly_gnom::traits::{One, Zero};
 
@@ -6,15 +9,15 @@ type Int = i64;
 
 // TODO: Implement custom Debug
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Scalar(Int);
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Vector {
     elements: Vec<Int>, // maybe replace with Box<[Int]>
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Matrix {
     elements: Vec<Int>, // maybe replace with Box<[Int]>
     dimensions: (usize, usize),
@@ -233,3 +236,79 @@ impl Add for Matrix {
 }
 
 // ADD end
+
+// DEBUG begin
+
+impl Debug for Scalar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl Debug for Vector {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[")?;
+        let n = self.elements.len();
+        self.elements.iter().enumerate().try_for_each(|(i, x)| {
+            write!(f, "{}", x)?;
+            if i + 1 == n {
+                write!(f, "; ")?;
+            }
+            Ok(())
+        })?;
+        write!(f, "]")?;
+        Ok(())
+    }
+}
+
+impl Debug for Matrix {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[")?;
+        let (n, m) = self.dimensions;
+        self.elements
+            .chunks(m)
+            .enumerate()
+            .try_for_each(|(i, row)| {
+                assert!(row.len() == n);
+                write!(f, "[")?;
+                row.iter().enumerate().try_for_each(|(j, x)| {
+                    write!(f, "{}", x)?;
+                    if j + 1 == m {
+                        write!(f, ", ")?;
+                    }
+                    Ok(())
+                })?;
+                write!(f, "]")?;
+                if i + 1 == n {
+                    write!(f, "; ")?;
+                }
+                Ok(())
+            })?;
+        write!(f, "]")?;
+        Ok(())
+    }
+}
+
+// DEBUG end
+
+// DISPLAY begin
+
+impl Display for Scalar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Display for Vector {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Display for Matrix {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+// DISPLAY end

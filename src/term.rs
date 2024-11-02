@@ -1,3 +1,5 @@
+use std::fmt::{self, Debug, Display};
+
 use crate::{
     error::{BuilderError, FinalizeError},
     factor::{Factor, Finalizable, Substitutiable, Value, Variable},
@@ -86,6 +88,45 @@ where
     }
 }
 
+impl<Values, Types> Debug for Term<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "( ( {:?} | {:?} ) ",
+            self.coefficient,
+            self.coefficient.as_type()
+        )?;
+        self.monomial
+            .iter()
+            .try_for_each(|monomial_factor| write!(f, "{:?} ", monomial_factor))?;
+        write!(f, "| ")?;
+        match self.finalize_type() {
+            Ok(finalized_type) => write!(f, "{:?}", finalized_type)?,
+            Err(_) => write!(f, "None")?,
+        }
+        write!(f, " )")?;
+        Ok(())
+    }
+}
+
+impl<Values, Types> Display for Term<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.coefficient)?;
+        self.monomial
+            .iter()
+            .try_for_each(|monomial_factor| write!(f, " {}", monomial_factor))?;
+        Ok(())
+    }
+}
+
 #[derive(Clone)]
 struct MonomialFactor<Values, Types> {
     factor: Factor<Values, Types>,
@@ -166,6 +207,39 @@ where
     }
 }
 
+impl<Values, Types> Debug for MonomialFactor<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "( {:?}", self.factor)?;
+        if self.power != 1 {
+            write!(f, "^{}", self.power)?;
+        }
+        write!(f, " | ")?;
+        match self.finalize_type() {
+            Ok(finalized_type) => write!(f, "{:?}", finalized_type)?,
+            Err(_) => write!(f, "None")?,
+        }
+        write!(f, " )")?;
+        Ok(())
+    }
+}
+
+impl<Values, Types> Display for MonomialFactor<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.factor)?;
+        if self.power != 1 {
+            write!(f, "^{}", self.power)?;
+        }
+        Ok(())
+    }
+}
 pub struct TermBuilder<Values, Types> {
     parent: PolynomialBuilder<Values, Types>,
     coefficient: Values,

@@ -1,4 +1,7 @@
-use std::ops::{Add, Mul, Neg};
+use std::{
+    fmt::{self, Debug, Display},
+    ops::{Add, Mul, Neg},
+};
 
 use poly_gnom::traits::{One, PolyValues, Zero};
 
@@ -7,7 +10,7 @@ use super::{
     types::Types,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Values {
     Scalar(Scalar),
     Vector(Vector),
@@ -59,6 +62,22 @@ impl Mul for Values {
             (Values::Matrix(l_mat), Values::Vector(r_vec)) => (l_mat * r_vec).map(Values::Vector),
             (Values::Matrix(l_mat), Values::Matrix(r_mat)) => (l_mat * r_mat).map(Values::Matrix),
         }
+    }
+}
+
+impl Debug for Values {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Values::Scalar(scalar) => write!(f, "scalar {{ {} }}", scalar),
+            Values::Vector(vector) => write!(f, "vector {{ {} }}", vector),
+            Values::Matrix(matrix) => write!(f, "matrix {{ {} }}", matrix),
+        }
+    }
+}
+
+impl Display for Values {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

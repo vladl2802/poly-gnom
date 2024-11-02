@@ -1,4 +1,7 @@
-use std::ops::{Add, Mul, Neg};
+use std::{
+    fmt::Display,
+    ops::{Add, Mul, Neg},
+};
 
 use poly_gnom::traits::{MulTraits, PolyTypes};
 
@@ -48,6 +51,16 @@ impl Mul for Types {
         MulTraits {
             result,
             commutative,
+        }
+    }
+}
+
+impl Display for Types {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Types::Scalar => write!(f, "Scalar"),
+            Types::Vector => write!(f, "Vector"),
+            Types::Matrix => write!(f, "Matrix"),
         }
     }
 }

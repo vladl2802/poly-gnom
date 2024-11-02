@@ -1,6 +1,6 @@
 pub mod polynomial;
-pub mod traits;
 pub mod symbol;
+pub mod traits;
 
 mod error;
 mod factor;

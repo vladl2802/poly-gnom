@@ -1,3 +1,5 @@
+use std::fmt::{Debug, Display};
+
 use crate::{
     error::{BuilderError, FinalizeError},
     factor::{Factor, Finalizable, SubPoly, Substitutiable, Value, Variable},
@@ -28,7 +30,7 @@ where
     pub fn zero(coefficient_type: Types) -> Result<Self, BuilderError> {
         Self::builder()
             .term_builder(
-                Values::one_with_type(coefficient_type).ok_or(BuilderError::CoefficientError)?,
+                Values::zero_with_type(coefficient_type).ok_or(BuilderError::CoefficientError)?,
             )
             .build()
             .build()
@@ -37,7 +39,7 @@ where
     pub fn one(coefficient_type: Types) -> Result<Self, BuilderError> {
         Self::builder()
             .term_builder(
-                Values::zero_with_type(coefficient_type).ok_or(BuilderError::CoefficientError)?,
+                Values::one_with_type(coefficient_type).ok_or(BuilderError::CoefficientError)?,
             )
             .build()
             .build()
@@ -87,6 +89,26 @@ where
 
     fn finalize_value(self) -> Result<Values, FinalizeError> {
         self.poly.finalize_value()
+    }
+}
+
+impl<Values, Types> Debug for Polynomial<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.poly)
+    }
+}
+
+impl<Values, Types> Display for Polynomial<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.poly)
     }
 }
 
