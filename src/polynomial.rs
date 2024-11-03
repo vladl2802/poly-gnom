@@ -8,6 +8,7 @@ use crate::{
     traits::{PolyTypes, PolyValues},
 };
 
+#[derive(Clone)]
 pub struct Polynomial<Values, Types> {
     poly: SubPoly<Values, Types>,
 }
@@ -59,6 +60,14 @@ where
         polynomial: Polynomial<Values, Types>,
     ) -> Self {
         self.substitute(to, Factor::SubPoly(polynomial.into()))
+    }
+
+    pub fn as_type(&self) -> Result<Types, FinalizeError> {
+        self.poly.finalize_type()
+    }
+
+    pub fn as_value(self) -> Result<Values, FinalizeError> {
+        self.poly.finalize_value()
     }
 }
 
@@ -128,12 +137,12 @@ impl<Values, Types> PolynomialBuilder<Values, Types> {
     pub fn maybe_term(
         mut self,
         term: Result<Term<Values, Types>, BuilderError>,
-    ) -> PolynomialBuilder<Values, Types> {
+    ) -> Self {
         self.parts.push(term);
         self
     }
 
-    pub fn term(self, term: Term<Values, Types>) -> PolynomialBuilder<Values, Types> {
+    pub fn term(self, term: Term<Values, Types>) -> Self {
         self.maybe_term(Ok(term))
     }
 
@@ -147,3 +156,24 @@ impl<Values, Types> PolynomialBuilder<Values, Types> {
         })
     }
 }
+
+// This cant be implemented still, because it requires lazy coefficient typing
+// For example given some expression (1 + x)(1 + y)
+// We can not determine can those be multiplyed until we do not finalize its types
+//
+// So we need to split polynomial state into two: 
+// 1. symbol-polynomial - do not require knowing type of each expression in it,
+// but because of that prohibits value-finalizing and simplification (which is not yet implemented)
+// 2. finalized-polynomial - requires knowing type of each expression in it and therefore can be value-finalized and simplified
+
+// struct PolynomialMul<Values, Types> {
+//     builder: PolynomialBuilder<Values, Types>,
+// }
+
+// impl<Values, Types> From<Polynomial<Values, Types>> for PolynomialMul<Values, Types> {
+//     fn from(polynomial: Polynomial<Values, Types>) -> Self {
+//         PolynomialMul {
+//             builder: PolynomialBuilder::new().term_builder( )
+//         }
+//     }
+// } 

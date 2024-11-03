@@ -1,4 +1,4 @@
-use std::fmt::{self, Debug, Display};
+use std::{fmt::{self, Debug, Display}, ops::Neg};
 
 use crate::{
     error::{BuilderError, FinalizeError},
@@ -49,13 +49,12 @@ where
                 .iter()
                 .try_fold(None, |pref: Option<Types>, factor| {
                     let factor_type = factor.finalize_type()?;
-                    match pref {
-                        None => Ok(Some(factor_type)),
+                    Ok(Some(match pref {
+                        None => factor_type,
                         Some(pref_type) => (pref_type * factor_type)
                             .result
-                            .map(|result_type| Some(result_type))
-                            .ok_or(FinalizeError::NoTypeToFinalize),
-                    }
+                            .ok_or(FinalizeError::NoTypeToFinalize)?,
+                    }))
                 })?;
         match monomial_type {
             Some(monomial_type) => (coef_type * monomial_type)
@@ -72,10 +71,10 @@ where
                 .into_iter()
                 .try_fold(None, |pref: Option<Values>, factor| {
                     let factor_value = factor.finalize_value()?;
-                    Ok(match pref {
-                        None => Some(factor_value),
-                        Some(pref_value) => pref_value * factor_value,
-                    })
+                    Ok(Some(match pref {
+                        None => factor_value,
+                        Some(pref_value) => (pref_value * factor_value).ok_or(FinalizeError::NoValueToFinalize)?,
+                    }))
                 })?;
         let result = match monomial_value {
             Some(monomial_value) => {
@@ -85,6 +84,19 @@ where
         };
         assert!(result.as_type() == finalized_type);
         Ok(result)
+    }
+}
+
+impl<Values, Types> Neg for Term<Values, Types>
+where
+    Types: PolyTypes<Types>,
+    Values: PolyValues<Types, Values>,
+{
+    type Output = Self;
+
+    fn neg(mut self) -> Self::Output {
+        self.coefficient = -self.coefficient;
+        self
     }
 }
 
@@ -213,16 +225,16 @@ where
     Values: PolyValues<Types, Values>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "( {:?}", self.factor)?;
-        if self.power != 1 {
-            write!(f, "^{}", self.power)?;
+        if self.power == 1 {
+            write!(f, "{:?}", self.factor)?;
+        } else {
+            write!(f, "( {:?}^{} | ", self.factor, self.power)?;
+            match self.finalize_type() {
+                Ok(finalized_type) => write!(f, "{:?}", finalized_type)?,
+                Err(_) => write!(f, "None")?,
+            }
+            write!(f, " )")?;
         }
-        write!(f, " | ")?;
-        match self.finalize_type() {
-            Ok(finalized_type) => write!(f, "{:?}", finalized_type)?,
-            Err(_) => write!(f, "None")?,
-        }
-        write!(f, " )")?;
         Ok(())
     }
 }
