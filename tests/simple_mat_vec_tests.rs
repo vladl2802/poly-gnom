@@ -1,11 +1,10 @@
 mod simple_mat_vec;
 
 mod tests {
-    use crate::simple_mat_vec::{objects::Scalar, types::Types, values::Values};
+    use crate::simple_mat_vec::{types::Types, values::Values};
     use poly_gnom::{
         polynomial::Polynomial,
         symbol::{SymbolInfo, SymbolsProvider},
-        traits::{One, PolyValues},
     };
 
     fn basic_sumbols_provider() -> SymbolsProvider<Types> {
