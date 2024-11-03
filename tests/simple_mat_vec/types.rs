@@ -40,12 +40,12 @@ impl Mul for Types {
         let (result, commutative) = match (self, rhs) {
             (Types::Scalar, Types::Scalar) => (Some(Types::Scalar), true),
             (Types::Scalar, Types::Vector) => (Some(Types::Vector), true),
-            (Types::Scalar, Types::Matrix) => (Some(Types::Scalar), true),
+            (Types::Scalar, Types::Matrix) => (Some(Types::Matrix), true),
             (Types::Vector, Types::Scalar) => (Some(Types::Vector), true),
             (Types::Vector, Types::Vector) => (None, false),
             (Types::Vector, Types::Matrix) => (None, false),
             (Types::Matrix, Types::Scalar) => (Some(Types::Matrix), true),
-            (Types::Matrix, Types::Vector) => (Some(Types::Matrix), false),
+            (Types::Matrix, Types::Vector) => (Some(Types::Vector), false),
             (Types::Matrix, Types::Matrix) => (Some(Types::Matrix), false),
         };
         MulTraits {

@@ -1,3 +1,6 @@
+// this file is most of all boiler plate and therefore most likely can be geenrated with some macroses
+// but this also requires some time to implement
+
 use std::{
     fmt::{self, Debug, Display},
     ops::{Add, Mul, Neg},
@@ -6,26 +9,28 @@ use std::{
 use poly_gnom::traits::{One, PolyValues, Zero};
 
 use super::{
-    objects::{Matrix, Scalar, Vector},
+    objects::{Int, Matrix, Scalar, Vector},
     types::Types,
 };
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Values {
     Scalar(Scalar),
     Vector(Vector),
     Matrix(Matrix),
 }
 
-impl Neg for Values {
-    type Output = Values;
+impl Values {
+    pub fn new_scalar(value: Int) -> Self {
+        Values::Scalar(Scalar::new(value))
+    }
 
-    fn neg(self) -> Self::Output {
-        match self {
-            Values::Scalar(scalar) => Values::Scalar(-scalar),
-            Values::Vector(vector) => Values::Vector(-vector),
-            Values::Matrix(matrix) => Values::Matrix(-matrix),
-        }
+    pub fn new_vector(elements: Vec<Int>) -> Self {
+        Values::Vector(Vector::new(elements))
+    }
+
+    pub fn new_matrix(elements: Vec<Vec<Int>>) -> Self {
+        Values::Matrix(Matrix::new(elements))
     }
 }
 
@@ -61,6 +66,18 @@ impl Mul for Values {
             (Values::Matrix(l_mat), Values::Scalar(r_val)) => Some(Values::Matrix(l_mat * r_val)),
             (Values::Matrix(l_mat), Values::Vector(r_vec)) => (l_mat * r_vec).map(Values::Vector),
             (Values::Matrix(l_mat), Values::Matrix(r_mat)) => (l_mat * r_mat).map(Values::Matrix),
+        }
+    }
+}
+
+impl Neg for Values {
+    type Output = Values;
+
+    fn neg(self) -> Self::Output {
+        match self {
+            Values::Scalar(scalar) => Values::Scalar(-scalar),
+            Values::Vector(vector) => Values::Vector(-vector),
+            Values::Matrix(matrix) => Values::Matrix(-matrix),
         }
     }
 }

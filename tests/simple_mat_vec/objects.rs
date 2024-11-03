@@ -5,19 +5,19 @@ use std::{
 
 use poly_gnom::traits::{One, Zero};
 
-type Int = i64;
+pub type Int = i64;
 
 // TODO: Implement custom Debug
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Scalar(Int);
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Vector {
     elements: Vec<Int>, // maybe replace with Box<[Int]>
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Matrix {
     elements: Vec<Int>, // maybe replace with Box<[Int]>
     dimensions: (usize, usize),
@@ -29,11 +29,42 @@ impl Matrix {
     }
 }
 
+// IMPL begin
+
+impl Scalar {
+    pub fn new(value: Int) -> Self {
+        Scalar(value)
+    }
+}
+
+impl Vector {
+    pub fn new(elements: Vec<Int>) -> Self {
+        assert!(elements.len() > 0);
+        Vector { elements }
+    }
+}
+
+impl Matrix {
+    pub fn new(rows: Vec<Vec<Int>>) -> Self {
+        let n = rows.len();
+        assert!(n > 0);
+        let m = rows[0].len();
+        assert!(m > 0);
+        rows.iter().for_each(|row| assert!(row.len() == m));
+        Matrix {
+            elements: rows.into_iter().flatten().collect(),
+            dimensions: (n, m),
+        }
+    }
+}
+
+// IMPL end
+
 // ZERO begin
 
 impl Zero for Scalar {
     fn zero() -> Self {
-        Scalar(0)
+        Scalar::new(0)
     }
 }
 
@@ -43,7 +74,7 @@ impl Zero for Scalar {
 
 impl One for Scalar {
     fn one() -> Self {
-        Scalar(1)
+        Scalar::new(1)
     }
 }
 
@@ -251,7 +282,7 @@ impl Debug for Vector {
         let n = self.elements.len();
         self.elements.iter().enumerate().try_for_each(|(i, x)| {
             write!(f, "{}", x)?;
-            if i + 1 == n {
+            if i + 1 != n {
                 write!(f, "; ")?;
             }
             Ok(())
@@ -273,13 +304,13 @@ impl Debug for Matrix {
                 write!(f, "[")?;
                 row.iter().enumerate().try_for_each(|(j, x)| {
                     write!(f, "{}", x)?;
-                    if j + 1 == m {
+                    if j + 1 != m {
                         write!(f, ", ")?;
                     }
                     Ok(())
                 })?;
                 write!(f, "]")?;
-                if i + 1 == n {
+                if i + 1 != n {
                     write!(f, "; ")?;
                 }
                 Ok(())
